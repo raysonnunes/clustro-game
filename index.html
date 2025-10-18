@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clustro - Jogo de Blocos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 30px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 550px;
+      width: 100%;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+    
+    h1 {
+      color: white;
+      font-size: 48px;
+      font-weight: bold;
+    }
+    
+    .subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: white;
+      font-size: 24px;
+    }
+    
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 20px;
+      border-radius: 20px;
+      color: white;
+      text-align: center;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+    
+    .message {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .message.victory {
+      background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .message-title {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .message-text {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .grid-container {
+      background: #0f0f1e;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      user-select: none;
+      position: relative;
+    }
+    
+    .cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 15px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .cell span {
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+    }
+    
+    .cell:not(.empty):hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    .cell:not(.empty):active {
+      transform: scale(0.95);
+    }
+    
+    .cell.selected {
+      transform: scale(0.9);
+      box-shadow: 0 0 0 4px white;
+      animation: pulse 0.5s ease infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 4px white;
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.5);
+      }
+    }
+    
+    .cell.empty {
+      background: transparent !important;
+      cursor: default;
+      box-shadow: none;
+    }
+    
+    .info {
+      margin-top: 15px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      min-height: 20px;
+    }
+    
+    .info.active {
+      color: #4ade80;
+      font-weight: bold;
+    }
+    
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal.show {
+      display: flex;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal-content {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 30px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      animation: scaleIn 0.3s ease;
+    }
+    
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+    
+    .modal-title {
+      color: white;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    
+    .close-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      font-size: 24px;
+      transition: all 0.2s;
+    }
+    
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+    
+    .ranking-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .ranking-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    
+    .ranking-position {
+      font-size: 24px;
+      font-weight: bold;
+      opacity: 0.6;
+      min-width: 40px;
+    }
+    
+    .ranking-name {
+      flex: 1;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .ranking-score {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .empty-ranking {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 40px;
+      font-size: 16px;
+    }
+    
+    @media (max-width: 640px) {
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 36px;
+      }
+      
+      .stat-value {
+        font-size: 28px;
+      }
+      
+      .cell {
+        font-size: 36px;
+      }
+      
+      .grid {
+        gap: 8px;
+      }
+      
+      .modal-content {
+        padding: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Clustro</h1>
+        <div class="subtitle" id="subtitle">Jogando como visitante</div>
+      </div>
+      <div class="buttons">
+        <button class="icon-btn" onclick="showRankings()" title="Rankings">
+          🏆
+        </button>
+        <button class="icon-btn" onclick="resetGame()" title="Reiniciar">
+          🔄
+        </button>
+      </div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Pontuação</div>
+        <div class="stat-value" id="score">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Movimentos</div>
+        <div class="stat-value" id="moves">0</div>
+      </div>
+    </div>
+    
+    <div id="message-container"></div>
+    
+    <div class="grid-container">
+      <div class="grid" id="grid"></div>
+    </div>
+    
+    <div class="info" id="info"></div>
+  </div>
+  
+  <!-- Modal de Rankings -->
+  <div class="modal" id="rankingModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">🏆 Rankings</div>
+        <button class="close-btn" onclick="closeRankings()">×</button>
+      </div>
+      <div class="ranking-list" id="rankingList">
+        <div class="empty-ranking">
+          Ainda não há pontuações registradas.<br>
+          Seja o primeiro a jogar!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ROWS = 6;
+    const COLS = 5;
+    const COLORS = [
+      { color: '#FF0080', symbol: '●' },
+      { color: '#00FF00', symbol: '★' },
+      { color: '#0080FF', symbol: '■' }
+    ];
+    const CLEAR_BONUS = 1000;
+    
+    let grid = [];
+    let score = 0;
+    let moves = 0;
+    let selected = [];
+    let gameOver = false;
+    let victory = false;
+    let rankings = JSON.parse(localStorage.getItem('clustro_rankings') || '[]');
+    
+    function initGrid() {
+      grid = [];
+      for (let i = 0; i < ROWS; i++) {
+        grid[i] = [];
+        for (let j = 0; j < COLS; j++) {
+          let color;
+          const useNeighbor = Math.random() < 0.35;
+          
+          if (useNeighbor && j > 0 && grid[i][j - 1]) {
+            color = grid[i][j - 1];
+          } else if (useNeighbor && i > 0 && grid[i - 1][j]) {
+            color = grid[i - 1][j];
+          } else {
+            color = COLORS[Math.floor(Math.random() * COLORS.length)];
+          }
+          
+          grid[i][j] = color;
+        }
+      }
+      render();
+    }
+    
+    function render() {
+      const gridEl = document.getElementById('grid');
+      gridEl.innerHTML = '';
+      
+      for (let i = 0; i < ROWS; i++) {
+        for (let j = 0; j < COLS; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          
+          if (grid[i][j]) {
+            cell.style.backgroundColor = grid[i][j].color;
+            const span = document.createElement('span');
+            span.textContent = grid[i][j].symbol;
+            cell.appendChild(span);
+            cell.onclick = () => handleClick(i, j);
+            
+            if (selected.some(s => s[0] === i && s[1] === j)) {
+              cell.classList.add('selected');
+            }
+          } else {
+            cell.classList.add('empty');
+          }
+          
+          gridEl.appendChild(cell);
+        }
+      }
+      
+      document.getElementById('score').textContent = score;
+      document.getElementById('moves').textContent = moves;
+      
+      updateInfo();
+    }
+    
+    function updateInfo() {
+      const info = document.getElementById('info');
+      if (selected.length >= 2) {
+        const points = selected.length * selected.length;
+        info.textContent = `Grupo: ${selected.length} blocos = ${points} pontos`;
+        info.classList.add('active');
+      } else {
+        info.textContent = '';
+        info.classList.remove('active');
+      }
+    }
+    
+    function findGroup(r, c, color, visited = new Set()) {
+      const key = `${r},${c}`;
+      
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || 
+          visited.has(key) || !grid[r][c] || 
+          grid[r][c].color !== color) {
+        return [];
+      }
+      
+      visited.add(key);
+      let group = [[r, c]];
+      
+      group.push(...findGroup(r - 1, c, color, visited));
+      group.push(...findGroup(r + 1, c, color, visited));
+      group.push(...findGroup(r, c - 1, color, visited));
+      group.push(...findGroup(r, c + 1, color, visited));
+      
+      return group;
+    }
+    
+    function handleClick(r, c) {
+      if (gameOver || victory || !grid[r][c]) return;
+      
+      const group = findGroup(r, c, grid[r][c].color);
+      
+      if (group.length < 2) return;
+      
+      selected = group;
+      render();
+      
+      setTimeout(() => {
+        group.forEach(([r, c]) => grid[r][c] = null);
+        applyGravity();
+        
+        const points = group.length * group.length;
+        score += points;
+        moves++;
+        selected = [];
+        
+        render();
+        checkGameState();
+      }, 200);
+    }
+    
+    function applyGravity() {
+      // Gravidade vertical
+      for (let c = 0; c < COLS; c++) {
+        let empty = ROWS - 1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (grid[r][c]) {
+            if (r !== empty) {
+              grid[empty][c] = grid[r][c];
+              grid[r][c] = null;
+            }
+            empty--;
+          }
+        }
+      }
+      
+      // Mover colunas vazias
+      let writeCol = COLS - 1;
+      for (let c = COLS - 1; c >= 0; c--) {
+        const hasBlocks = grid.some(row => row[c]);
+        
+        if (hasBlocks) {
+          if (c !== writeCol) {
+            for (let r = 0; r < ROWS; r++) {
+              grid[r][writeCol] = grid[r][c];
+              grid[r][c] = null;
+            }
+          }
+          writeCol--;
+        }
+      }
+    }
+    
+    function checkGameState() {
+      const hasBlocks = grid.some(row => row.some(cell => cell));
+      
+      if (!hasBlocks) {
+        victory = true;
+        score += CLEAR_BONUS;
+        showMessage('🎉 VITÓRIA! 🎉', `Bônus de limpeza: +${CLEAR_BONUS} pontos`, true);
+        saveRanking();
+        render();
+        return;
+      }
+      
+      // Verificar se há jogadas possíveis
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (grid[r][c]) {
+            const group = findGroup(r, c, grid[r][c].color);
+            if (group.length >= 2) {
+              return;
+            }
+          }
+        }
+      }
+      
+      gameOver = true;
+      showMessage('😔 Fim de jogo!', 'Não há mais jogadas possíveis', false);
+      saveRanking();
+    }
+    
+    function showMessage(title, text, isVictory) {
+      const container = document.getElementById('message-container');
+      container.innerHTML = `
+        <div class="message ${isVictory ? 'victory' : ''}">
+          <div class="message-title">${title}</div>
+          <div class="message-text">${text}</div>
+        </div>
+      `;
+    }
+    
+    function saveRanking() {
+      rankings.push({
+        score: score,
+        moves: moves,
+        victory: victory,
+        date: new Date().toISOString()
+      });
+      
+      rankings.sort((a, b) => b.score - a.score);
+      rankings = rankings.slice(0, 100); // Manter top 100
+      
+      localStorage.setItem('clustro_rankings', JSON.stringify(rankings));
+    }
+    
+    function showRankings() {
+      const modal = document.getElementById('rankingModal');
+      const list = document.getElementById('rankingList');
+      
+      if (rankings.length === 0) {
+        list.innerHTML = `
+          <div class="empty-ranking">
+            Ainda não há pontuações registradas.<br>
+            Seja o primeiro a jogar!
+          </div>
+        `;
+      } else {
+        list.innerHTML = rankings.slice(0, 10).map((r, i) => `
+          <div class="ranking-item">
+            <div class="ranking-position">#${i + 1}</div>
+            <div class="ranking-name">
+              ${r.victory ? '🏆' : '🎮'} ${r.moves} movimentos
+              <div style="font-size: 12px; opacity: 0.7;">
+                ${new Date(r.date).toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+            <div class="ranking-score">${r.score}</div>
+          </div>
+        `).join('');
+      }
+      
+      modal.classList.add('show');
+    }
+    
+    function closeRankings() {
+      document.getElementById('rankingModal').classList.remove('show');
+    }
+    
+    function resetGame() {
+      score = 0;
+      moves = 0;
+      selected = [];
+      gameOver = false;
+      victory = false;
+      document.getElementById('message-container').innerHTML = '';
+      initGrid();
+    }
+    
+    // Inicializar jogo
+    initGrid();
+  </script>
+</body>
+</html>
